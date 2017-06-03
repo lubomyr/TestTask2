@@ -1,0 +1,9 @@
+<resources>
+    <string name="app_name">ProBegin</string>
+    <string name="image">image</string>
+    <string name="probegin_news">ProBegin News</string>
+    <string name="back">\u003c\u003c</string>
+    <string name="next">\u003e\u003e</string>
+    <string name="_1">1</string>
+    <string name="logo">logo</string>
+</resources>

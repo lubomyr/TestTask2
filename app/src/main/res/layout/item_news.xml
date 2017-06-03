@@ -1,0 +1,61 @@
+<?xml version="1.0" encoding="utf-8"?>
+<LinearLayout xmlns:android="http://schemas.android.com/apk/res/android"
+    android:layout_width="match_parent"
+    android:layout_height="wrap_content"
+    android:orientation="vertical">
+
+    <LinearLayout
+        android:id="@+id/item"
+        android:layout_width="match_parent"
+        android:layout_height="wrap_content"
+        android:gravity="center_horizontal"
+        android:background="@drawable/border"
+        android:orientation="vertical">
+
+        <View
+            android:layout_width="match_parent"
+            android:layout_height="10dp"
+            android:background="@color/colorNewsBackground"/>
+
+        <ImageView
+            android:id="@+id/image"
+            android:layout_width="match_parent"
+            android:layout_height="wrap_content"
+            android:layout_marginTop="@dimen/up_down_margin"
+            android:layout_marginStart="@dimen/left_rigth_margin"
+            android:layout_marginEnd="@dimen/left_rigth_margin"
+            android:contentDescription="@string/image" />
+
+        <TextView
+            android:id="@+id/title"
+            android:layout_width="match_parent"
+            android:layout_height="wrap_content"
+            android:layout_marginTop="@dimen/up_down_margin"
+            android:layout_marginStart="@dimen/left_rigth_margin"
+            android:layout_marginEnd="@dimen/left_rigth_margin"
+            android:layout_marginBottom="@dimen/up_down_margin"
+            android:textColor="@color/colorBlack"
+            android:textStyle="bold"
+            android:textAlignment="center"/>
+
+        <Button
+            android:id="@+id/button"
+            android:layout_width="match_parent"
+            android:layout_height="wrap_content"
+            android:layout_marginStart="@dimen/left_rigth_margin"
+            android:layout_marginEnd="@dimen/left_rigth_margin"
+            android:layout_marginBottom="@dimen/up_down_margin"
+            android:background="@color/colorPrimary"
+            android:textAllCaps="false"
+            android:textColor="@color/colorWhite"
+            android:visibility="gone"/>
+
+    </LinearLayout>
+
+    <View
+        android:layout_width="match_parent"
+        android:layout_height="10dp"
+        android:background="@color/colorNewsBackground">
+
+    </View>
+</LinearLayout>

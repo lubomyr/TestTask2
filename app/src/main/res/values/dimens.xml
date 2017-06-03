@@ -1,0 +1,7 @@
+<?xml version="1.0" encoding="utf-8"?>
+<resources>
+    <dimen name="toolbar_size">42dp</dimen>
+    <dimen name="toolbar_buttons_widths">45dp</dimen>
+    <dimen name="up_down_margin">20dp</dimen>
+    <dimen name="left_rigth_margin">30dp</dimen>
+</resources>
