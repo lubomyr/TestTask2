@@ -24,6 +24,7 @@ public class MainActivity extends AppCompatActivity implements View.OnClickListe
     private ActivityMainBinding binding;
     private NewsAdapter newsAdapter;
     private NewsService newsService;
+    private boolean permitActions;
 
     @Override
     protected void onCreate(Bundle savedInstanceState) {
@@ -33,19 +34,24 @@ public class MainActivity extends AppCompatActivity implements View.OnClickListe
         newsService = new NewsServiceImpl(this, this);
         bindButtons();
         bindNewsAdapter();
-        getFirstNewsPage();
+        permitActions = true;
+        if (newsService.getCurrentPage() == 0)
+            getFirstNewsPage();
     }
 
     @Override
     public void onClick(View v) {
-        binding.progressBar.setVisibility(View.VISIBLE);
-        switch(v.getId()) {
-            case R.id.next:
-                newsService.getNextNewsPage();
-                break;
-            case R.id.prev:
-                newsService.getPrevNewsPage();
-                break;
+        if (permitActions) {
+            binding.progressBar.setVisibility(View.VISIBLE);
+            permitActions = false;
+            switch (v.getId()) {
+                case R.id.next:
+                    newsService.getNextNewsPage();
+                    break;
+                case R.id.prev:
+                    newsService.getPrevNewsPage();
+                    break;
+            }
         }
     }
 
@@ -59,6 +65,7 @@ public class MainActivity extends AppCompatActivity implements View.OnClickListe
             newsAdapter.notifyDataSetChanged();
         }
         binding.progressBar.setVisibility(View.GONE);
+        permitActions = true;
     }
 
     @Override
