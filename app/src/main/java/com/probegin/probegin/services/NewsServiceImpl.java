@@ -1,6 +1,7 @@
 package com.probegin.probegin.services;
 
 import android.content.Context;
+import android.util.Log;
 
 import com.android.volley.Request;
 import com.android.volley.RequestQueue;
@@ -9,6 +10,7 @@ import com.android.volley.VolleyError;
 import com.android.volley.toolbox.StringRequest;
 import com.android.volley.toolbox.Volley;
 import com.probegin.probegin.entities.News;
+import com.probegin.probegin.utils.TextUtils;
 
 import org.jsoup.Jsoup;
 import org.jsoup.nodes.Document;
@@ -20,18 +22,20 @@ import java.util.List;
 import java.util.ListIterator;
 
 import static com.probegin.probegin.utils.NameSpace.DOMAIN;
+import static com.probegin.probegin.utils.NameSpace.KEY_RESPONSE;
 
 public class NewsServiceImpl implements NewsService {
     private int serverPage;
     private int localPage;
+    private List<News> serverPageNewsList;
+    private List<News> localPageNewsList;
     private ListIterator serverPageNewsIterator;
     private Context context;
     private NewsListener newsListener;
-    private final int maxItems = 3;
-    private List<News> result;
     private String action;
     private int count;
     private int iteratorPos;
+    private final int maxItems = 3;
     private final String KEY_FIRST = "first";
     private final String KEY_NEXT = "next";
     private final String KEY_PREV = "prev";
@@ -44,13 +48,15 @@ public class NewsServiceImpl implements NewsService {
     public NewsServiceImpl(Context context, NewsListener newsListener) {
         this.context = context;
         this.newsListener = newsListener;
-        result = new ArrayList<>();
+        serverPageNewsList = new ArrayList<>();
+        localPageNewsList = new ArrayList<>();
     }
 
     public void getNewsFromServer(int serverPage) {
         String url = DOMAIN + "/news/?lcp_page0=" + serverPage;
-        final List<News> result = new ArrayList<>();
+        final List<News> items = new ArrayList<>();
         RequestQueue queue = Volley.newRequestQueue(context);
+        serverPageNewsList.clear();
 
         StringRequest req = new StringRequest(Request.Method.GET, url,
                 new Response.Listener<String>() {
@@ -70,18 +76,19 @@ public class NewsServiceImpl implements NewsService {
                             String actions = actionsEl.text();
                             String link = imageEl.children().tagName("a").attr("href");
                             String image = imageEl.children().get(0).childNode(0).attr("src");
+                            Log.d(KEY_RESPONSE, "title=" + title);
                             News news = new News(title, summary, actions, link, image);
-                            result.add(news);
+                            items.add(news);
                         }
-                        serverPageNewsList.clear();
-                        serverPageNewsList.addAll(result);
+                        serverPageNewsList.addAll(items);
                         setupLocalNewsPage();
                     }
                 },
                 new Response.ErrorListener() {
                     @Override
                     public void onErrorResponse(VolleyError volleyError) {
-                        // Handle error
+                        TextUtils.showMessage(context, volleyError.getMessage());
+                        setupLocalNewsPage();
                     }
                 }
         );
@@ -95,7 +102,7 @@ public class NewsServiceImpl implements NewsService {
         localPage = 1;
         count = 0;
         action = KEY_FIRST;
-        result.clear();
+        localPageNewsList.clear();
         getNewsFromServer(serverPage);
     }
 
@@ -103,13 +110,13 @@ public class NewsServiceImpl implements NewsService {
     public void getNextNewsPage() {
         count = 0;
         action = KEY_NEXT;
-        result.clear();
-        while (serverPageNewsIterator.hasNext() && count < maxItems) {
+        localPageNewsList.clear();
+        while (serverPageNewsIterator.hasNext() && (count < maxItems)) {
             News news = (News) serverPageNewsIterator.next();
-            result.add(news);
+            localPageNewsList.add(news);
             count++;
         }
-        if (result.isEmpty()) {
+        if (localPageNewsList.isEmpty()) {
             getNewsFromServer(serverPage + 1);
         } else
             setupLocalNewsPage();
@@ -119,7 +126,7 @@ public class NewsServiceImpl implements NewsService {
     public void getPrevNewsPage() {
         count = 0;
         action = KEY_PREV;
-        result.clear();
+        localPageNewsList.clear();
         iteratorPos = serverPageNewsIterator.nextIndex();
         if (iteratorPos > maxItems) {
             for (int i = 0; i < iteratorPos; i++) {
@@ -140,26 +147,26 @@ public class NewsServiceImpl implements NewsService {
         switch (action) {
             case KEY_FIRST: {
                 serverPageNewsIterator = serverPageNewsList.listIterator();
-                while (serverPageNewsIterator.hasNext() && count < maxItems) {
+                while (serverPageNewsIterator.hasNext() && (count < maxItems)) {
                     News news = (News) serverPageNewsIterator.next();
-                    result.add(news);
+                    localPageNewsList.add(news);
                     count++;
                 }
             }
             break;
 
             case KEY_NEXT: {
-                if (result.isEmpty()) {
+                if (localPageNewsList.isEmpty()) {
                     serverPageNewsIterator = serverPageNewsList.listIterator();
                     while (serverPageNewsIterator.hasNext() && count < maxItems) {
                         News news = (News) serverPageNewsIterator.next();
-                        result.add(news);
+                        localPageNewsList.add(news);
                         count++;
                     }
-                    if (!result.isEmpty())
+                    if (!localPageNewsList.isEmpty())
                         serverPage++;
                 }
-                if (!result.isEmpty())
+                if (!localPageNewsList.isEmpty())
                     localPage++;
             }
             break;
@@ -172,17 +179,17 @@ public class NewsServiceImpl implements NewsService {
                     for (int i = 0; i < serverPageNewsList.size() - maxItems; i++)
                         serverPageNewsIterator.next();
                 }
-                while (serverPageNewsIterator.hasNext() && count < maxItems) {
+                while (serverPageNewsIterator.hasNext() && (count < maxItems)) {
                     News news = (News) serverPageNewsIterator.next();
-                    result.add(news);
+                    localPageNewsList.add(news);
                     count++;
                 }
-                if (!result.isEmpty())
+                if (!localPageNewsList.isEmpty())
                     localPage--;
             }
             break;
         }
 
-        newsListener.pageNewsListResult(result);
+        newsListener.pageNewsListResult(localPageNewsList);
     }
 }
