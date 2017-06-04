@@ -14,6 +14,7 @@ import com.probegin.probegin.services.NewsListener;
 import com.probegin.probegin.services.NewsService;
 import com.probegin.probegin.services.NewsServiceImpl;
 
+import java.util.ArrayList;
 import java.util.List;
 
 import static com.probegin.probegin.utils.NameSpace.KEY_NEWS;
@@ -25,6 +26,7 @@ public class MainActivity extends AppCompatActivity implements View.OnClickListe
     private NewsAdapter newsAdapter;
     private NewsService newsService;
     private boolean permitActions;
+    private List<News> currentNewsList;
 
     @Override
     protected void onCreate(Bundle savedInstanceState) {
@@ -32,6 +34,7 @@ public class MainActivity extends AppCompatActivity implements View.OnClickListe
         binding = DataBindingUtil.setContentView(this, R.layout.activity_main);
 
         newsService = new NewsServiceImpl(this, this);
+        currentNewsList = new ArrayList<>();
         bindButtons();
         bindNewsAdapter();
         permitActions = true;
@@ -61,7 +64,9 @@ public class MainActivity extends AppCompatActivity implements View.OnClickListe
         binding.prev.setVisibility((newsService.getCurrentPage() != 1) ? View.VISIBLE : View.INVISIBLE);
         binding.next.setVisibility(!pageNewsList.isEmpty() ? View.VISIBLE : View.INVISIBLE);
         if (!pageNewsList.isEmpty()) {
-            newsAdapter.setList(pageNewsList);
+            currentNewsList.clear();
+            currentNewsList.addAll(pageNewsList);
+            newsAdapter.setList(currentNewsList);
             newsAdapter.notifyDataSetChanged();
         }
         binding.progressBar.setVisibility(View.GONE);
@@ -91,4 +96,5 @@ public class MainActivity extends AppCompatActivity implements View.OnClickListe
         binding.progressBar.setVisibility(View.VISIBLE);
         newsService.getFirstNewsPage();
     }
+
 }
