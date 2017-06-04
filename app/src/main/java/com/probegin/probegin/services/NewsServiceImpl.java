@@ -1,7 +1,6 @@
 package com.probegin.probegin.services;
 
 import android.content.Context;
-import android.util.Log;
 
 import com.android.volley.Request;
 import com.android.volley.RequestQueue;
@@ -22,7 +21,6 @@ import java.util.List;
 import java.util.ListIterator;
 
 import static com.probegin.probegin.utils.NameSpace.DOMAIN;
-import static com.probegin.probegin.utils.NameSpace.KEY_RESPONSE;
 
 public class NewsServiceImpl implements NewsService {
     private int serverPage;
@@ -39,11 +37,6 @@ public class NewsServiceImpl implements NewsService {
     private final String KEY_FIRST = "first";
     private final String KEY_NEXT = "next";
     private final String KEY_PREV = "prev";
-    private final String KEY_PAGE = "page";
-    private final String KEY_TITLE = "title";
-    private final String KEY_SUMMARY = "summary";
-    private final String KEY_ACTIONS = "actions";
-    private final String KEY_IMAGE = "image";
 
     public NewsServiceImpl(Context context, NewsListener newsListener) {
         this.context = context;
@@ -54,7 +47,6 @@ public class NewsServiceImpl implements NewsService {
 
     public void getNewsFromServer(int serverPage) {
         String url = DOMAIN + "/news/?lcp_page0=" + serverPage;
-        final List<News> items = new ArrayList<>();
         RequestQueue queue = Volley.newRequestQueue(context);
         serverPageNewsList.clear();
 
@@ -63,25 +55,7 @@ public class NewsServiceImpl implements NewsService {
                     @Override
                     public void onResponse(String data) {
                         Document doc = Jsoup.parse(data);
-                        Elements pageEl = doc.getElementsByClass(KEY_PAGE);
-                        Element pageListEl = pageEl.get(0);
-                        int size = pageListEl.getElementsByClass(KEY_TITLE).size();
-                        for (int i = 0; i < size; i++) {
-                            Element titleEl = pageListEl.getElementsByClass(KEY_TITLE).get(i);
-                            Element summaryEl = pageListEl.getElementsByClass(KEY_SUMMARY).get(i);
-                            Element actionsEl = pageListEl.getElementsByClass(KEY_ACTIONS).get(i);
-                            Element imageEl = pageListEl.getElementsByClass(KEY_IMAGE).get(i);
-                            String title = titleEl.text();
-                            String summary = summaryEl.text();
-                            String actions = actionsEl.text();
-                            String link = imageEl.children().tagName("a").attr("href");
-                            String image = imageEl.children().get(0).childNode(0).attr("src");
-                            Log.d(KEY_RESPONSE, "title=" + title);
-                            News news = new News(title, summary, actions, link, image);
-                            items.add(news);
-                        }
-                        serverPageNewsList.addAll(items);
-                        setupLocalNewsPage();
+                        parseData(doc);
                     }
                 },
                 new Response.ErrorListener() {
@@ -93,6 +67,33 @@ public class NewsServiceImpl implements NewsService {
                 }
         );
         queue.add(req);
+    }
+
+    private void parseData(Document doc) {
+        List<News> items = new ArrayList<>();
+        final String KEY_PAGE = "page";
+        final String KEY_TITLE = "title";
+        final String KEY_SUMMARY = "summary";
+        final String KEY_ACTIONS = "actions";
+        final String KEY_IMAGE = "image";
+        Elements pageEl = doc.getElementsByClass(KEY_PAGE);
+        Element pageListEl = pageEl.get(0);
+        int size = pageListEl.getElementsByClass(KEY_TITLE).size();
+        for (int i = 0; i < size; i++) {
+            Element titleEl = pageListEl.getElementsByClass(KEY_TITLE).get(i);
+            Element summaryEl = pageListEl.getElementsByClass(KEY_SUMMARY).get(i);
+            Element actionsEl = pageListEl.getElementsByClass(KEY_ACTIONS).get(i);
+            Element imageEl = pageListEl.getElementsByClass(KEY_IMAGE).get(i);
+            String title = titleEl.text();
+            String summary = summaryEl.text();
+            String actions = actionsEl.text();
+            String link = imageEl.children().tagName("a").attr("href");
+            String image = imageEl.children().get(0).childNode(0).attr("src");
+            News news = new News(title, summary, actions, link, image);
+            items.add(news);
+        }
+        serverPageNewsList.addAll(items);
+        setupLocalNewsPage();
     }
 
 
