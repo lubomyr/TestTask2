@@ -2,25 +2,21 @@ package com.probegin.probegin;
 
 import android.content.Intent;
 import android.databinding.DataBindingUtil;
+import android.os.AsyncTask;
 import android.os.Bundle;
 import android.support.v7.app.AppCompatActivity;
 import android.text.Html;
 import android.view.View;
 
-import com.android.volley.Request;
-import com.android.volley.RequestQueue;
-import com.android.volley.Response;
-import com.android.volley.VolleyError;
-import com.android.volley.toolbox.StringRequest;
-import com.android.volley.toolbox.Volley;
 import com.bumptech.glide.Glide;
 import com.probegin.probegin.databinding.ActivityExpandedBinding;
 import com.probegin.probegin.entities.News;
-import com.probegin.probegin.utils.TextUtils;
 
 import org.jsoup.Jsoup;
 import org.jsoup.nodes.Document;
 import org.jsoup.nodes.Element;
+
+import java.io.IOException;
 
 import static com.probegin.probegin.utils.NameSpace.KEY_NEWS;
 
@@ -53,27 +49,10 @@ public class ExpandedActivity extends AppCompatActivity {
         getExpandedInfoFromServer(news.getUrl());
     }
 
-    public void getExpandedInfoFromServer(String url) {
-        RequestQueue queue = Volley.newRequestQueue(this);
-
-        StringRequest req = new StringRequest(Request.Method.GET, url,
-                new Response.Listener<String>() {
-                    @Override
-                    public void onResponse(String data) {
-                        Document doc = Jsoup.parse(data);
-                        parseData(doc);
-                        binding.progressBar.setVisibility(View.GONE);
-                    }
-                },
-                new Response.ErrorListener() {
-                    @Override
-                    public void onErrorResponse(VolleyError volleyError) {
-                        binding.progressBar.setVisibility(View.GONE);
-                        TextUtils.showMessage(ExpandedActivity.this, volleyError.getMessage());
-                    }
-                }
-        );
-        queue.add(req);
+    private void getExpandedInfoFromServer(String url) {
+        ServerTask task = new ServerTask();
+        task.url = url;
+        task.execute();
     }
 
     private void parseData(Document doc) {
@@ -96,5 +75,28 @@ public class ExpandedActivity extends AppCompatActivity {
             input = start + end;
         }
         return input;
+    }
+
+    private class ServerTask extends AsyncTask<Void, Void, Void> {
+        String url;
+        Document doc = null;
+
+        @Override
+        protected Void doInBackground(Void... params) {
+            try {
+                doc = Jsoup.connect(url).get();
+            } catch (IOException e) {
+                e.printStackTrace();
+            }
+            return null;
+        }
+
+        @Override
+        protected void onPostExecute(Void result) {
+            super.onPostExecute(result);
+
+            binding.progressBar.setVisibility(View.GONE);
+            parseData(doc);
+        }
     }
 }

@@ -1,13 +1,8 @@
 package com.probegin.probegin.services;
 
 import android.content.Context;
+import android.os.AsyncTask;
 
-import com.android.volley.Request;
-import com.android.volley.RequestQueue;
-import com.android.volley.Response;
-import com.android.volley.VolleyError;
-import com.android.volley.toolbox.StringRequest;
-import com.android.volley.toolbox.Volley;
 import com.probegin.probegin.entities.News;
 import com.probegin.probegin.utils.TextUtils;
 
@@ -16,6 +11,7 @@ import org.jsoup.nodes.Document;
 import org.jsoup.nodes.Element;
 import org.jsoup.select.Elements;
 
+import java.io.IOException;
 import java.util.ArrayList;
 import java.util.List;
 import java.util.ListIterator;
@@ -45,28 +41,10 @@ public class NewsServiceImpl implements NewsService {
         localPageNewsList = new ArrayList<>();
     }
 
-    public void getNewsFromServer(int serverPage) {
-        String url = DOMAIN + "/news/?lcp_page0=" + serverPage;
-        RequestQueue queue = Volley.newRequestQueue(context);
-        serverPageNewsList.clear();
-
-        StringRequest req = new StringRequest(Request.Method.GET, url,
-                new Response.Listener<String>() {
-                    @Override
-                    public void onResponse(String data) {
-                        Document doc = Jsoup.parse(data);
-                        parseData(doc);
-                    }
-                },
-                new Response.ErrorListener() {
-                    @Override
-                    public void onErrorResponse(VolleyError volleyError) {
-                        TextUtils.showMessage(context, volleyError.getMessage());
-                        setupLocalNewsPage();
-                    }
-                }
-        );
-        queue.add(req);
+    private void getNewsFromServer(int serverPage) {
+        ServerTask task = new ServerTask();
+        task.serverPage = serverPage;
+        task.execute();
     }
 
     private void parseData(Document doc) {
@@ -106,6 +84,7 @@ public class NewsServiceImpl implements NewsService {
         localPageNewsList.clear();
         getNewsFromServer(serverPage);
     }
+
 
     @Override
     public void getNextNewsPage() {
@@ -192,5 +171,32 @@ public class NewsServiceImpl implements NewsService {
         }
 
         newsListener.pageNewsListResult(localPageNewsList);
+    }
+
+    private class ServerTask extends AsyncTask<Void, Void, Void> {
+        int serverPage;
+        Document doc = null;
+
+        @Override
+        protected Void doInBackground(Void... params) {
+            serverPageNewsList.clear();
+            try {
+                String url = DOMAIN + "/news/?lcp_page0=" + serverPage;
+                doc = Jsoup.connect(url).get();
+            } catch (IOException e) {
+                e.printStackTrace();
+                TextUtils.showMessage(context, e.getMessage());
+                setupLocalNewsPage();
+            }
+
+            return null;
+        }
+
+        @Override
+        protected void onPostExecute(Void result) {
+            super.onPostExecute(result);
+
+            parseData(doc);
+        }
     }
 }
