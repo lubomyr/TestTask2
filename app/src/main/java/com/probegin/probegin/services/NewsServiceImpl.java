@@ -30,13 +30,14 @@ public class NewsServiceImpl implements NewsService {
     private ListIterator serverPageNewsIterator;
     private Context context;
     private NewsListener newsListener;
-    private String action;
     private int count;
     private int iteratorPos;
     private final int maxItems = 3;
-    private final String KEY_FIRST = "first";
-    private final String KEY_NEXT = "next";
-    private final String KEY_PREV = "prev";
+
+    private enum Action {FIRST, NEXT, PREV}
+
+    ;
+    private Action action;
 
     public NewsServiceImpl(Context context, NewsListener newsListener) {
         this.context = context;
@@ -93,6 +94,7 @@ public class NewsServiceImpl implements NewsService {
             items.add(news);
         }
         serverPageNewsList.addAll(items);
+        serverPageNewsIterator = serverPageNewsList.listIterator();
         setupLocalNewsPage();
     }
 
@@ -102,7 +104,7 @@ public class NewsServiceImpl implements NewsService {
         serverPage = 1;
         localPage = 1;
         count = 0;
-        action = KEY_FIRST;
+        action = Action.FIRST;
         localPageNewsList.clear();
         getNewsFromServer(serverPage);
     }
@@ -110,7 +112,7 @@ public class NewsServiceImpl implements NewsService {
     @Override
     public void getNextNewsPage() {
         count = 0;
-        action = KEY_NEXT;
+        action = Action.NEXT;
         localPageNewsList.clear();
         while (serverPageNewsIterator.hasNext() && (count < maxItems)) {
             News news = (News) serverPageNewsIterator.next();
@@ -126,7 +128,7 @@ public class NewsServiceImpl implements NewsService {
     @Override
     public void getPrevNewsPage() {
         count = 0;
-        action = KEY_PREV;
+        action = Action.PREV;
         localPageNewsList.clear();
         iteratorPos = serverPageNewsIterator.nextIndex();
         if (iteratorPos > maxItems) {
@@ -146,8 +148,7 @@ public class NewsServiceImpl implements NewsService {
 
     private void setupLocalNewsPage() {
         switch (action) {
-            case KEY_FIRST: {
-                serverPageNewsIterator = serverPageNewsList.listIterator();
+            case FIRST: {
                 while (serverPageNewsIterator.hasNext() && (count < maxItems)) {
                     News news = (News) serverPageNewsIterator.next();
                     localPageNewsList.add(news);
@@ -156,10 +157,9 @@ public class NewsServiceImpl implements NewsService {
             }
             break;
 
-            case KEY_NEXT: {
+            case NEXT: {
                 if (localPageNewsList.isEmpty()) {
-                    serverPageNewsIterator = serverPageNewsList.listIterator();
-                    while (serverPageNewsIterator.hasNext() && count < maxItems) {
+                    while (serverPageNewsIterator.hasNext() && (count < maxItems)) {
                         News news = (News) serverPageNewsIterator.next();
                         localPageNewsList.add(news);
                         count++;
@@ -172,11 +172,10 @@ public class NewsServiceImpl implements NewsService {
             }
             break;
 
-            case KEY_PREV: {
+            case PREV: {
                 if (iteratorPos <= maxItems) {
                     if (!serverPageNewsList.isEmpty())
                         serverPage--;
-                    serverPageNewsIterator = serverPageNewsList.listIterator();
                     for (int i = 0; i < serverPageNewsList.size() - maxItems; i++)
                         serverPageNewsIterator.next();
                 }
