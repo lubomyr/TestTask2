@@ -33,10 +33,7 @@ public class NewsServiceImpl implements NewsService {
     private int count;
     private int iteratorPos;
     private final int maxItems = 3;
-
     private enum Action {FIRST, NEXT, PREV}
-
-    ;
     private Action action;
 
     public NewsServiceImpl(Context context, NewsListener newsListener) {
@@ -46,7 +43,7 @@ public class NewsServiceImpl implements NewsService {
         localPageNewsList = new ArrayList<>();
     }
 
-    public void getNewsFromServer(int serverPage) {
+    private void getNewsFromServer(int serverPage) {
         String url = DOMAIN + "/news/?lcp_page0=" + serverPage;
         RequestQueue queue = Volley.newRequestQueue(context);
         serverPageNewsList.clear();
@@ -63,7 +60,7 @@ public class NewsServiceImpl implements NewsService {
                     @Override
                     public void onErrorResponse(VolleyError volleyError) {
                         TextUtils.showMessage(context, volleyError.getMessage());
-                        setupLocalNewsPage();
+                        newsListener.pageNewsListResult(localPageNewsList);
                     }
                 }
         );
@@ -146,50 +143,56 @@ public class NewsServiceImpl implements NewsService {
         return localPage;
     }
 
+    private void setupFirstPage() {
+        while (serverPageNewsIterator.hasNext() && (count < maxItems)) {
+            News news = (News) serverPageNewsIterator.next();
+            localPageNewsList.add(news);
+            count++;
+        }
+    }
+
+    private void setupNextPage() {
+        if (localPageNewsList.isEmpty()) {
+            while (serverPageNewsIterator.hasNext() && (count < maxItems)) {
+                News news = (News) serverPageNewsIterator.next();
+                localPageNewsList.add(news);
+                count++;
+            }
+            if (!localPageNewsList.isEmpty())
+                serverPage++;
+        }
+        if (!localPageNewsList.isEmpty())
+            localPage++;
+    }
+
+    private void setupPrevPage() {
+        if (iteratorPos <= maxItems) {
+            if (!serverPageNewsList.isEmpty())
+                serverPage--;
+            for (int i = 0; i < serverPageNewsList.size() - maxItems; i++)
+                serverPageNewsIterator.next();
+        }
+        while (serverPageNewsIterator.hasNext() && (count < maxItems)) {
+            News news = (News) serverPageNewsIterator.next();
+            localPageNewsList.add(news);
+            count++;
+        }
+        if (!localPageNewsList.isEmpty())
+            localPage--;
+    }
+
     private void setupLocalNewsPage() {
         switch (action) {
-            case FIRST: {
-                while (serverPageNewsIterator.hasNext() && (count < maxItems)) {
-                    News news = (News) serverPageNewsIterator.next();
-                    localPageNewsList.add(news);
-                    count++;
-                }
-            }
-            break;
-
-            case NEXT: {
-                if (localPageNewsList.isEmpty()) {
-                    while (serverPageNewsIterator.hasNext() && (count < maxItems)) {
-                        News news = (News) serverPageNewsIterator.next();
-                        localPageNewsList.add(news);
-                        count++;
-                    }
-                    if (!localPageNewsList.isEmpty())
-                        serverPage++;
-                }
-                if (!localPageNewsList.isEmpty())
-                    localPage++;
-            }
-            break;
-
-            case PREV: {
-                if (iteratorPos <= maxItems) {
-                    if (!serverPageNewsList.isEmpty())
-                        serverPage--;
-                    for (int i = 0; i < serverPageNewsList.size() - maxItems; i++)
-                        serverPageNewsIterator.next();
-                }
-                while (serverPageNewsIterator.hasNext() && (count < maxItems)) {
-                    News news = (News) serverPageNewsIterator.next();
-                    localPageNewsList.add(news);
-                    count++;
-                }
-                if (!localPageNewsList.isEmpty())
-                    localPage--;
-            }
-            break;
+            case FIRST:
+                setupFirstPage();
+                break;
+            case NEXT:
+                setupNextPage();
+                break;
+            case PREV:
+                setupPrevPage();
+                break;
         }
-
         newsListener.pageNewsListResult(localPageNewsList);
     }
 }
